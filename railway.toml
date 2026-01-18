@@ -1,0 +1,12 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "python -m src"
+restartPolicyType = "never"
+
+# Cron schedule: 7:30am Eastern Time daily
+# Railway uses UTC, so 7:30am ET = 12:30 UTC (EST) / 11:30 UTC (EDT)
+# Using 12:30 UTC for 7:30am EST; will be 8:30am during EDT
+[deploy.cron]
+schedule = "30 12 * * *"
