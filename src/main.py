@@ -192,6 +192,11 @@ def main():
         help="Send a test email to verify configuration",
     )
     parser.add_argument(
+        "--reset",
+        action="store_true",
+        help="Clear seen articles and run fresh",
+    )
+    parser.add_argument(
         "--log-level",
         default=LOG_LEVEL,
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
@@ -200,6 +205,12 @@ def main():
 
     args = parser.parse_args()
     setup_logging(args.log_level)
+
+    if args.reset:
+        logger.info("Clearing seen articles...")
+        db = Database(DB_PATH)
+        count = db.clear_seen_articles()
+        print(f"Cleared {count} seen articles. Running fresh collection...")
 
     if args.test_email:
         logger.info("Sending test email...")

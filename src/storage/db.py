@@ -147,3 +147,11 @@ class Database:
                 """
             ).fetchall()
             return [row["source_name"] for row in rows]
+
+    def clear_seen_articles(self) -> int:
+        """Clear all seen articles to allow fresh collection."""
+        with self._get_conn() as conn:
+            cursor = conn.execute("DELETE FROM articles")
+            count = cursor.rowcount
+            logger.info(f"Cleared {count} seen articles from database")
+            return count

@@ -9,7 +9,14 @@
       "Bash(git init:*)",
       "Bash(git add:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nInitial commit: Daily briefing system\n\n- RSS and Reddit collectors for news aggregation\n- Email delivery via Resend with NYT/Atlantic-inspired design\n- Topic classification \\(sports, politics, business, crypto, movies\\)\n- Sports section grouped by teams \\(Knicks, Giants, Liverpool, Mets\\)\n- New York weather in email header\n- 7-day article filtering\n- Railway cron deployment configured for 7:30am EST daily\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(git config:*)"
+      "Bash(git config:*)",
+      "Bash(gh auth:*)",
+      "Bash(brew list:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(git remote remove:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
