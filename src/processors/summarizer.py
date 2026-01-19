@@ -161,16 +161,21 @@ Summary:"""
         topic_keywords = {
             "politics": ["congress", "senate", "president", "election", "democrat", "republican",
                         "biden", "trump", "legislation", "vote", "political", "governor",
-                        "white house", "capitol", "supreme court", "parliament", "minister"],
-            "crypto": ["bitcoin", "ethereum", "cryptocurrency", "blockchain", "binance",
-                      "coinbase", "solana", "defi", "web3"],
-            "movies": ["film", "movie", "cinema", "oscar", "hollywood", "box office", "premiere",
-                      "golden globe", "actress", "mattel", "barbie", "paramount", "warner bros"],
+                        "white house", "capitol", "supreme court", "parliament", "minister",
+                        "pentagon", "immigration", "border", "tariff", "sanctions"],
+            "crypto": ["bitcoin", "btc", "ethereum", "eth", "cryptocurrency", "blockchain", "binance",
+                      "coinbase", "solana", "defi", "web3", "crypto", "token", "altcoin",
+                      "stablecoin", "nft", "mining", "halving", "memecoin"],
+            "movies": ["movie", "cinema", "oscar", "hollywood", "box office", "premiere",
+                      "golden globe", "actress", "actor", "director", "screenplay", "sundance",
+                      "cannes", "netflix film", "disney film", "marvel", "spielberg", "scorsese"],
             "business": ["stock market", "economy", "ceo", "earnings", "revenue", "startup",
                         "investment", "ipo", "nasdaq", "dow jones", "inflation", "wall street",
-                        "profit", "merger", "acquisition"],
+                        "profit", "merger", "acquisition", "fed ", "federal reserve", "interest rate",
+                        "gdp", "recession", "market", "investor", "shares", "quarterly"],
             "sports": ["nba", "nfl", "mlb", "premier league", "championship", "playoff",
-                      "touchdown", "goalkeeper", "striker", "quarterback", "pitcher"],
+                      "touchdown", "goalkeeper", "striker", "quarterback", "pitcher",
+                      "soccer", "football", "basketball", "baseball", "hockey", "nhl"],
         }
 
         topic_scores = {topic: 0 for topic in TOPICS}

@@ -1,7 +1,8 @@
-"""Reddit collector using public JSON endpoint (no auth required)."""
+"""Reddit collector using RSS feeds (more reliable from cloud providers)."""
 
 from datetime import datetime
 from typing import Optional
+from xml.etree import ElementTree
 
 import httpx
 
@@ -12,7 +13,7 @@ logger = get_logger(__name__)
 
 
 class RedditCollector(Collector):
-    """Collector for Reddit subreddits using public JSON API."""
+    """Collector for Reddit subreddits using RSS feeds."""
 
     BASE_URL = "https://www.reddit.com"
 
@@ -22,7 +23,6 @@ class RedditCollector(Collector):
         self.client = httpx.AsyncClient(
             timeout=30.0,
             headers={
-                # Reddit requires a descriptive User-Agent
                 "User-Agent": "DailyBriefing/1.0 (Personal news aggregator)",
             },
             follow_redirects=True,
@@ -33,22 +33,14 @@ class RedditCollector(Collector):
         return f"r/{self._name}"
 
     async def collect(self) -> list[Article]:
-        """Fetch hot posts from the subreddit."""
-        url = f"{self.BASE_URL}/r/{self.subreddit}/hot.json"
+        """Fetch hot posts from the subreddit via RSS."""
+        url = f"{self.BASE_URL}/r/{self.subreddit}/hot.rss"
 
         try:
             response = await self.client.get(url, params={"limit": 25})
             response.raise_for_status()
 
-            data = response.json()
-            articles = []
-
-            for child in data.get("data", {}).get("children", []):
-                post = child.get("data", {})
-                article = self._parse_post(post)
-                if article:
-                    articles.append(article)
-
+            articles = self._parse_rss(response.text)
             logger.info(f"[{self.name}] Collected {len(articles)} posts")
             return articles
 
@@ -59,71 +51,79 @@ class RedditCollector(Collector):
             logger.error(f"[{self.name}] Failed to collect: {e}")
             raise
 
-    def _parse_post(self, post: dict) -> Optional[Article]:
-        """Parse a Reddit post into an Article."""
-        # Skip stickied/pinned posts
-        if post.get("stickied"):
+    def _parse_rss(self, xml_content: str) -> list[Article]:
+        """Parse RSS feed into Articles."""
+        articles = []
+
+        try:
+            root = ElementTree.fromstring(xml_content)
+        except ElementTree.ParseError as e:
+            logger.error(f"[{self.name}] Failed to parse RSS: {e}")
+            return []
+
+        # Handle Atom namespace (Reddit uses Atom format)
+        ns = {"atom": "http://www.w3.org/2005/Atom"}
+
+        for entry in root.findall("atom:entry", ns):
+            article = self._parse_entry(entry, ns)
+            if article:
+                articles.append(article)
+
+        return articles
+
+    def _parse_entry(self, entry: ElementTree.Element, ns: dict) -> Optional[Article]:
+        """Parse an RSS entry into an Article."""
+        title_elem = entry.find("atom:title", ns)
+        link_elem = entry.find("atom:link", ns)
+        updated_elem = entry.find("atom:updated", ns)
+        author_elem = entry.find("atom:author/atom:name", ns)
+        content_elem = entry.find("atom:content", ns)
+
+        title = title_elem.text if title_elem is not None else None
+        url = link_elem.get("href") if link_elem is not None else None
+
+        if not title or not url:
             return None
 
-        # Skip posts with very low engagement
-        score = post.get("score", 0)
-        if score < 10:
-            return None
-
-        title = post.get("title")
-        permalink = post.get("permalink")
-
-        if not title or not permalink:
-            return None
-
-        url = f"{self.BASE_URL}{permalink}"
-
-        # Get post content/selftext
-        selftext = post.get("selftext", "")
-        if len(selftext) > 500:
-            selftext = selftext[:497] + "..."
-
-        # If it's a link post, note the external URL
-        external_url = post.get("url", "")
-        if external_url and not external_url.startswith(self.BASE_URL):
-            if selftext:
-                selftext = f"{selftext}\n\nLink: {external_url}"
-            else:
-                selftext = f"Link: {external_url}"
-
-        # Parse created timestamp
+        # Parse published date
         published_at = None
-        created_utc = post.get("created_utc")
-        if created_utc:
+        if updated_elem is not None and updated_elem.text:
             try:
-                published_at = datetime.fromtimestamp(created_utc)
+                # Reddit uses ISO format: 2026-01-18T12:00:00+00:00
+                date_str = updated_elem.text
+                if date_str.endswith("+00:00"):
+                    date_str = date_str[:-6]
+                published_at = datetime.fromisoformat(date_str)
             except (TypeError, ValueError):
                 pass
 
-        # Get author
-        author = post.get("author")
-        if author == "[deleted]":
-            author = None
+        # Get author (strip /u/ prefix)
+        author = None
+        if author_elem is not None and author_elem.text:
+            author = author_elem.text.replace("/u/", "")
+            if author == "[deleted]":
+                author = None
 
-        # Build summary with engagement stats
-        num_comments = post.get("num_comments", 0)
-        summary = selftext or f"[{score} upvotes, {num_comments} comments]"
-
-        # Get flair as tags
-        tags = []
-        flair = post.get("link_flair_text")
-        if flair:
-            tags.append(flair)
+        # Get content/summary from HTML content
+        summary = ""
+        if content_elem is not None and content_elem.text:
+            # Content is HTML, extract a simple summary
+            import re
+            text = re.sub(r'<[^>]+>', ' ', content_elem.text)
+            text = ' '.join(text.split())[:500]
+            if len(text) == 500:
+                text = text[:497] + "..."
+            summary = text
 
         return Article(
             url=url,
             title=title,
             source=self.name,
-            summary=summary,
+            summary=summary or f"[Post from {self.name}]",
             author=author,
             published_at=published_at,
             topic="sports",  # All our Reddit sources are sports-related
-            tags=tags,
+            tags=[],
         )
 
     async def close(self) -> None:

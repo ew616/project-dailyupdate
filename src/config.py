@@ -73,15 +73,20 @@ RSS_SOURCES = [
         "url": "https://www.newyorker.com/feed/everything",
         "enabled": True,
     },
+    {
+        "name": "CoinDesk",
+        "url": "https://www.coindesk.com/arc/outboundfeeds/rss/",
+        "enabled": True,
+    },
+    {
+        "name": "CNBC",
+        "url": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
+        "enabled": True,
+    },
 ]
 
-# Reddit subreddits
-REDDIT_SOURCES = [
-    {"name": "NYKnicks", "subreddit": "NYKnicks", "enabled": True},
-    {"name": "NYGiants", "subreddit": "NYGiants", "enabled": True},
-    {"name": "LiverpoolFC", "subreddit": "LiverpoolFC", "enabled": True},
-    {"name": "NewYorkMets", "subreddit": "NewYorkMets", "enabled": True},
-]
+# Reddit subreddits (disabled - use RSS feeds only)
+REDDIT_SOURCES = []
 
 # Claude settings
 CLAUDE_MODEL = "claude-sonnet-4-20250514"
